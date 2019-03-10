@@ -11,17 +11,17 @@ Feel free to contribute by submitting new articles via pull requests.
 
 **Acceptance Criteria** for Submitted Articles:
 
-- Topic has to be relevant to Vanilo
-- The article must be in the root folder of the repo
-- The article must be in valid markdown format with `.md` file extension
-- The filename must be in `kebab-case` (ie. all lowercase letters, no underscore, hyphens for word separator, eg.: `using-custom-theme-for-the-admin-panel.md`)
-- The filename shouldn't start with `how-to` (it's already on the path)
-- File assets must be in a separate folder matching the filename of the article, eg.: `using-custom-theme-for-the-admin-panel/screenshot1.png`
-- The article uses proper English grammar
+- Topic must to be relevant to Vanilo.
+- The article must be in the root folder of the repo.
+- The article must be in valid markdown format with `.md` file extension.
+- The filename must be in `kebab-case` (ie. all lowercase letters, no underscore, hyphens for word separator, eg.: `using-custom-theme-for-the-admin-panel.md`).
+- The filename shouldn't start with `how-to` (it's already on the path).
+- File assets must be in a separate folder matching the filename of the article, eg.: `using-custom-theme-for-the-admin-panel/screenshot1.png`.
+- The article uses proper English grammar.
 - The file must begin with a [YAML front matter](https://jekyllrb.com/docs/front-matter/) section containing at least the following data:
   - `title`": the title of the article in [Title Case](https://en.wikipedia.org/wiki/Capitalization#Title_case).
   - `excerpt`: Short (1-2 sentences) summary of the article. Gets shown in the article list.
-  - `date`: The date of the article in `YYYY-mm-dd` format, eg.: `2019-04-21`
+  - `date`: The date of the article in `YYYY-mm-dd` format, eg.: `2019-04-21`.
 - The article must not begin with the title/h1, because it gets added from the title from the yaml front matter section.
 
 ### Example Article
