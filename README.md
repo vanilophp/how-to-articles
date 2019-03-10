@@ -26,7 +26,7 @@ Feel free to contribute by submitting new articles via pull requests.
 
 ### Example Article
 
-```markdown
+~~~markdown
 ---
 title: Using Custom Theme for the Admin Panel
 excerpt: This article guides you through the steps of using a custom theme for the Vanilo (AppShell) Admin Panel
@@ -43,7 +43,7 @@ public function boot($app)
     // This is BS, but this is a demo-demo article, ok? ;)
     $app->appShell->theme->setPrimaryColor('#4349dd');
 }
-```
+\```
 
 > Use Markdown features like blockquotes.
 
@@ -59,4 +59,4 @@ article.
 Also don't over-articulate, using more than 2-3 levels is usually unnecessary.
 
 Have fun!
-```
+~~~
