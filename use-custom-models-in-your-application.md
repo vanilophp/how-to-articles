@@ -2,6 +2,7 @@
 title: Using Custom Models in Your Application
 excerpt: One of the most common customization of Applications built on top of Vanilo is the extension of models.
 date: 2019-04-27
+tags: [models, customization, concord, migrations]
 ---
 
 Vanilo uses [Concord](https://artkonekt.github.io/concord/#/models) to manage its models.
