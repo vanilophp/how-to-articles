@@ -43,6 +43,7 @@ to them. If you want to apply the same logic to both, then you need to extend bo
 **Steps:**
 
 - Create the extended request classes in your application:
+
 ```php
 // app/Http/Requests/CreateTaxon.php
 namespace App\Http\Requests;
@@ -78,7 +79,9 @@ class UpdateTaxon extends BaseUpdateTaxon
     }
 }
 ```
+
 - Register the modified requests so that the underlying modules use it:
+
 ```php
 // app/Providers/AppServiceProvider.php
 class AppServiceProvider extends ServiceProvider
