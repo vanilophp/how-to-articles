@@ -5,150 +5,300 @@ date: 2025-02-17
 tags: [models, product]
 ---
 
-## Searching Products
+The `ProductSearch` class provides a powerful and flexible way to retrieve products based on various criteria. 
 
-The `ProductSearch` class provides a way to search for products and master products based on various criteria. The `ProductSearch` class enables filtering by name, slug, taxons, channels, price ranges, and other attributes.
+It supports:
 
-### Finding Products by Name
+> - Filtering by name, slug, taxon, price range, and property values
+> - Sorting options and pagination
+> - Custom attribute filtering
 
-#### Exact Match:
+For more details, check out the Vanilo.io [documentation](https://vanilo.io/docs/4.x/products).
 
-This will return products and master products that contain "Shiny Glue" in their name.
+This guide walks you through setting up product listing, implementing filtering, and displaying individual product details.
 
-```php
-$finder = new ProductSearch();
-$result = $finder->nameContains('Shiny Glue')->getResults();
-```
+## Product Listing
 
-#### Starts With:
+The product listing page retrieves and displays all available products.
 
-Finds products and master products whose names start with "Mature", such as "Matured Cheese" or "Mature People".
-
-```php
-$finder = new ProductSearch();
-$result = $finder->nameStartsWith('Mature')->getResults();
-```
-
-#### Ends With:
-
-Finds products and master products where the name ends with "Transformator", such as "Bobinated Transformator".
+#### Controller:
 
 ```php
-$finder = new ProductSearch();
-$result = $finder->nameEndsWith('Transformator')->getResults();
-```
+namespace App\Http\Controllers;
 
-#### Multiple Matches:
+use Vanilo\Foundation\Search\ProductSearch;
 
-Returns multiple products and master products containing "Mandarin" in their names.
+class ProductController extends Controller
+{
+    private ProductSearch $productFinder;
 
-```php
-$finder = new ProductSearch();
-$products = $finder->nameContains('Mandarin')->getResults();
-```
-
-### Finding Products by Slug
-
-#### Exact Slug Match:
-
-Returns the product with the exact matching slug.
-
-```php
-$product = ProductSearch::findBySlug('nintendo-todd-20cm-plush');
-```
-
-#### Slug with Exception Handling:
-
-Throws a `ModelNotFoundException` if the product is not found.
-
-```php
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-
-try {
-    $product = ProductSearch::findBySlugOrFail('non-existent-slug');
-} catch (ModelNotFoundException $e) {
-    // Handle case where product is not found
+    public function __construct(ProductSearch $productFinder)
+    {
+        $this->productFinder = $productFinder;
+    }
+    
+    public function index()
+    {
+        return view('product.index', [
+            'products' => $this->productFinder->getResults(),
+        ]);
+    }
 }
 ```
 
-### Filtering Products
-
-#### By Taxon:
+#### Route:
 
 ```php
-use Vanilo\Category\Models\Taxon;
+use App\Http\Controllers\ProductController;
 
-$taxon = Taxon::find(1);
-$products = (new ProductSearch())->withinTaxon($taxon)->getResults();
+Route::get('/product-list', [ProductController::class, 'index'])->name('product.index');
 ```
 
-#### By Channel:
+#### View:
+
+```blade
+@foreach($products as $product)
+    <a href="{{ route('product.show', $product->slug) }}"
+        <img
+            @if($product->hasImage())
+                src="{{ $product->getThumbnailUrl() }}"
+            @else
+                src="/images/no_image_placeholder.jpg"
+            @endif
+            alt="{{ $product->name }}"
+        >
+    
+        <h5>{{ $product->name }}</h5>
+        <p>{{ format_price($product->price) }}</p>
+    </a>
+@endforeach
+```
+
+## Product Filtering
+
+Allows users to refine product results based on selected attributes like category, properties, etc.
+
+#### Controller:
 
 ```php
-use Vanilo\Channel\Models\Channel;
+namespace App\Http\Controllers;
 
-$channel = Channel::find(1);
-$products = (new ProductSearch())->withinChannel($channel)->getResults();
+use App\Http\Requests\ProductIndexRequest;
+use Vanilo\Properties\Models\PropertyProxy;
+use Vanilo\Foundation\Search\ProductSearch;
+
+class ProductController extends Controller
+{
+    ...
+    
+    public function index(ProductIndexRequest $request)
+    {
+        $properties = PropertyProxy::get();
+       
+        foreach ($request->filters($properties) as $property => $values) {
+            $this->productFinder->havingPropertyValuesByName($property, $values);
+        }
+    
+        return view('product.index', [
+            'products' => $this->productFinder->getResults(),
+            'properties' => $properties,
+            'filters' => $request->filters($properties),
+        ]);
+    }
+}
 ```
 
-#### By Price Range:
+#### ProductIndexRequest:
 
 ```php
-$products = (new ProductSearch())->priceBetween(100, 500)->getResults();
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
+
+class ProductIndexRequest extends FormRequest
+{
+    public function filters(Collection $properties): array
+    {
+        $filters = [];
+
+        foreach ($this->query() as $propertySlug => $values) {
+            if ($properties->contains(function ($property) use ($propertySlug) {
+                return $property->slug === $propertySlug;
+            })) {
+                $filters[$propertySlug] = is_array($values) ? $values : [$values];
+            }
+        }
+
+        return $filters;
+    }
+
+    public function rules(): array
+    {
+        return [];
+    }
+}
 ```
 
-### Filtering by Property Values
+#### View:
 
-#### By Single Property Value:
+```blade
+<form action="{{ route('product.index') }}">
+    Filters
 
-Filters products that have a specific property value.
+    <ul>
+        @foreach($properties as $property)
+            <li>{{ $property->name }}:</li>
+            
+            @foreach($property->values() as $propertyValue)
+                <li>
+                    <label for="filter-{{$propertyValue->id}}">
+                        <input type="checkbox"
+                               name="{{ $property->slug }}[]"
+                               value="{{ $propertyValue->value }}"
+                               id="filter-{{$propertyValue->id}}"
+                               @if(in_array($propertyValue->value, $filters)) checked="checked" @endif
+                        >
+                        {{ $propertyValue->title }}
+                    </label>
+                </li>
+            @endforeach
+        @endforeach
+    </ul>
+
+    <button type="submit">Apply</button>
+</form>
+```
+
+## Product Filtering by Category
+
+Enables users to filter products within a specific category while applying additional filters.
+
+#### Controller:
 
 ```php
-use App\Models\PropertyValue;
+namespace App\Http\Controllers;
 
-$propertyValue = PropertyValue::find(1);
-$products = (new ProductSearch())->havingPropertyValue($propertyValue)->getResults();
+use Vanilo\Category\Contracts\Taxon;
+use App\Http\Requests\ProductIndexRequest;
+use Vanilo\Properties\Models\PropertyProxy;
+use Vanilo\Foundation\Search\ProductSearch;
+
+class ProductController extends Controller
+{
+    ...
+    
+    public function index(ProductIndexRequest $request, string $taxonomyName = null, Taxon $taxon = null)
+    {
+        $properties = PropertyProxy::get();
+        
+        if ($taxon) {
+            $this->productFinder->withinTaxon($taxon);
+        }
+        
+        foreach ($request->filters($properties) as $property => $values) {
+            $this->productFinder->havingPropertyValuesByName($property, $values);
+        }
+        
+        return view('product.index', [
+            'products' => $this->productFinder->getResults(),
+            'properties' => $properties,
+            'filters' => $request->filters($properties),
+            'taxon' => $taxon,
+        ]);
+    }
 ```
 
-#### By Multiple Property Values:
-
-Filters products that match multiple property values.
+#### Route:
 
 ```php
-$propertyValues = PropertyValue::whereIn('id', [1, 2, 3])->get();
-$products = (new ProductSearch())->havingPropertyValues($propertyValues->toArray())->getResults();
+Route::get('/c/{taxonomyName}/{taxon}', [ProductController::class, 'index'])->name('taxon.show');
 ```
 
-#### By Property Name and Values:
+#### View:
 
-Filters products by a property name and its corresponding values.
+```blade
+<form action="{{ $taxon ? route('taxon.show', [$taxon->taxonomy->slug, $taxon]) : route('product.index') }}">
+    Filters
+
+    <ul>
+        @foreach($properties as $property)
+            <li>{{ $property->name }}:</li>
+            
+            @foreach($property->values() as $propertyValue)
+                <li>
+                    <label for="filter-{{$propertyValue->id}}">
+                        <input type="checkbox"
+                               name="{{ $property->slug }}[]"
+                               value="{{ $propertyValue->value }}"
+                               id="filter-{{$propertyValue->id}}"
+                               @if(in_array($propertyValue->value, $filters)) checked="checked" @endif
+                        >
+                        {{ $propertyValue->title }}
+                    </label>
+                </li>
+            @endforeach
+        @endforeach
+    </ul>
+
+    <button type="submit">Apply</button>
+</form>
+```
+
+## Product Details
+
+Once a user selects a product, they should be taken to the product details page.
+
+#### Controller:
 
 ```php
-$products = (new ProductSearch())->havingPropertyValuesByName('color', ['red', 'blue'])->getResults();
+namespace App\Http\Controllers;
+
+use Vanilo\Foundation\Search\ProductSearch;
+
+class ProductController extends Controller
+{
+    ...
+    
+    public function show(string $slug)
+    {
+        $product = $this->productFinder->findBySlug($slug);
+
+        if (! $product) {
+            abort(404);
+        }
+
+        return view('product.show', [
+           'product' => $product,
+        ]);
+    }
+}
 ```
 
-#### Using OR Conditions for Property Values:
-
-Applies an OR condition when filtering by multiple property values.
+#### Route:
 
 ```php
-$products = (new ProductSearch())->orHavingPropertyValues($propertyValues->toArray())->getResults();
+use App\Http\Controllers\ProductController;
+
+Route::get('/p/{slug}', [ProductController::class, 'show'])->name('product.show');
 ```
 
-### Filtering by Custom Attributes
+#### View:
 
-#### Filtering by Color:
+```blade
+<x-app-layout>
+    <img src="{{ $product->getImageUrl("square") }}">
 
-```php
-$products = (new ProductSearch())->where('color', 'red')->getResults();
+    <h1>{{ $product->name }}</h1>
+    <p>SKU: {{ $product->sku }}</p>
+    <p>{{ format_price($product->price) }}</p>
+</x-app-layout>
 ```
 
-#### Filtering by Material:
+#### Displaying Product Properties:
 
-```php
-$products = (new ProductSearch())->where('material', 'cotton')->getResults();
+```blade
+@foreach($product->propertyValues as $value)
+    {{ $value->property->name }}: {{ $value->title }}
+@endforeach
 ```
-
-### Conclusion
-
-The ProductSearch class provides a robust and flexible way to find products based on various criteria. It supports filtering by names, slugs, taxons, price ranges, sorting options, pagination, property values, and custom attributes. Using AND and OR conditions when filtering by property values allows for precise and versatile product discovery.
