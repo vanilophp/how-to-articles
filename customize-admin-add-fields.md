@@ -5,7 +5,7 @@ date: 2019-10-21
 tags: [models, customization, admin]
 ---
 
-A very typical scenario is to [add/remove fields](use-custom-models-in-your-application.md) to/from
+A very typical scenario is to [add/remove fields](use-custom-models-in-your-application) to/from
 base Vanilo models. Changing the model layer however, won't automatically make those fields
 available in the Admin area.
 
