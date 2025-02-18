@@ -9,11 +9,9 @@ The `ProductSearch` class provides a powerful and flexible way to retrieve produ
 
 It supports:
 
-> - Filtering by name, slug, taxon, price range, and property values
-> - Sorting options and pagination
-> - Custom attribute filtering
-
-For more details, check out the Vanilo.io [documentation](https://vanilo.io/docs/4.x/products).
+- Filtering by name, slug, taxon, price range, and property values
+- Sorting options and pagination
+- Custom attribute filtering
 
 This guide walks you through setting up product listing, implementing filtering, and displaying individual product details.
 
@@ -21,7 +19,7 @@ This guide walks you through setting up product listing, implementing filtering,
 
 The product listing page retrieves and displays all available products.
 
-#### Controller:
+**Controller**:
 
 ```php
 namespace App\Http\Controllers;
@@ -46,7 +44,7 @@ class ProductController extends Controller
 }
 ```
 
-#### Route:
+**Route**:
 
 ```php
 use App\Http\Controllers\ProductController;
@@ -54,7 +52,7 @@ use App\Http\Controllers\ProductController;
 Route::get('/product-list', [ProductController::class, 'index'])->name('product.index');
 ```
 
-#### View:
+**View**:
 
 ```blade
 @foreach($products as $product)
@@ -78,7 +76,7 @@ Route::get('/product-list', [ProductController::class, 'index'])->name('product.
 
 Allows users to refine product results based on selected attributes like category, properties, etc.
 
-#### Controller:
+**Controller**:
 
 ```php
 namespace App\Http\Controllers;
@@ -108,7 +106,7 @@ class ProductController extends Controller
 }
 ```
 
-#### ProductIndexRequest:
+**ProductIndexRequest**:
 
 ```php
 namespace App\Http\Requests;
@@ -140,7 +138,7 @@ class ProductIndexRequest extends FormRequest
 }
 ```
 
-#### View:
+**View**:
 
 ```blade
 <form action="{{ route('product.index') }}">
@@ -174,7 +172,7 @@ class ProductIndexRequest extends FormRequest
 
 Enables users to filter products within a specific category while applying additional filters.
 
-#### Controller:
+**Controller**:
 
 ```php
 namespace App\Http\Controllers;
@@ -209,13 +207,13 @@ class ProductController extends Controller
     }
 ```
 
-#### Route:
+**Route**:
 
 ```php
 Route::get('/c/{taxonomyName}/{taxon}', [ProductController::class, 'index'])->name('taxon.show');
 ```
 
-#### View:
+**View**:
 
 ```blade
 <form action="{{ $taxon ? route('taxon.show', [$taxon->taxonomy->slug, $taxon]) : route('product.index') }}">
@@ -249,7 +247,7 @@ Route::get('/c/{taxonomyName}/{taxon}', [ProductController::class, 'index'])->na
 
 Once a user selects a product, they should be taken to the product details page.
 
-#### Controller:
+**Controller**:
 
 ```php
 namespace App\Http\Controllers;
@@ -275,7 +273,7 @@ class ProductController extends Controller
 }
 ```
 
-#### Route:
+**Route**:
 
 ```php
 use App\Http\Controllers\ProductController;
@@ -283,7 +281,7 @@ use App\Http\Controllers\ProductController;
 Route::get('/p/{slug}', [ProductController::class, 'show'])->name('product.show');
 ```
 
-#### View:
+**View**:
 
 ```blade
 <x-app-layout>
@@ -295,10 +293,12 @@ Route::get('/p/{slug}', [ProductController::class, 'show'])->name('product.show'
 </x-app-layout>
 ```
 
-#### Displaying Product Properties:
+**Displaying Product Properties**:
 
 ```blade
 @foreach($product->propertyValues as $value)
     {{ $value->property->name }}: {{ $value->title }}
 @endforeach
 ```
+
+For more details, check out the Vanilo.io [documentation](https://vanilo.io/docs/4.x/products).
